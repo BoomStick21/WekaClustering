@@ -17,10 +17,6 @@ import weka.core.OptionHandler;
  * @author Asus
  */
 public class myAgnes extends AbstractClusterer implements OptionHandler, CapabilitiesHandler, Drawable {
-    public myAgnes() {
-        
-    }
-
     @Override
     public void buildClusterer(Instances i) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -54,5 +50,9 @@ public class myAgnes extends AbstractClusterer implements OptionHandler, Capabil
     @Override
     public String graph() throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    public myAgnes() {
+        
     }
 }
