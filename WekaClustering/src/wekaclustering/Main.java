@@ -20,6 +20,7 @@ public class Main {
     private static Instances dataSet;
     private static Clusterer cls;
     private static String classifierType;
+    private static String[] optionsArr;
     
     public static void loadFile() throws Exception {
         ArrayList<String> fileNames = getFileNames("input/train");
@@ -49,6 +50,7 @@ public class Main {
     public static ArrayList<String> getFileNames(String dir) {
         ArrayList<String> results = new ArrayList<>();
         File[] files = new File(dir).listFiles();
+        
 
         for (File file : files) {
             if (file.isFile()) {
@@ -66,28 +68,29 @@ public class Main {
         System.out.println("1. Load New DataSet");
         System.out.println("2. Print DataSet");
         System.out.println("3. Remove Attribute");
-        System.out.println("4. Create Clusterer");
+        System.out.println("4. Set Options");
+        System.out.println("5. Create Clusterer");
         if (classifierType != null) {
-            System.out.println("5. Print Result");
-            System.out.println("6. Percentage Split");
-            System.out.println("7. Use Training Set");
-            System.out.println("8. Use Existing Test Set");
-            System.out.println("9. Predict Test Set");
-            System.out.println("10. Save Model");
-            System.out.println("11. Load Model");
+            System.out.println("6. Print Result");
+            System.out.println("7. Percentage Split");
+            System.out.println("8. Use Training Set");
+            System.out.println("9. Use Existing Test Set");
+            System.out.println("10. Predict Test Set");
+            System.out.println("11. Save Model");
+            System.out.println("12. Load Model");
         }
         System.out.println("0. Exit");
         System.out.print("> ");
         Scanner in = new Scanner(System.in);
         int num = in.nextInt();
         if (classifierType == null) {
-            if (num > 4) {
+            if (num > 5) {
                 System.out.println("Input error. Try again.");
                 System.out.print("> ");
                 num = in.nextInt();
             }
         } else {
-            if (num > 11) {
+            if (num > 12) {
                 System.out.println("Input error. Try again.");
                 System.out.print("> ");
                 num = in.nextInt();
@@ -141,6 +144,26 @@ public class Main {
                 break;
             }
             case 4 : {
+                System.out.println("Options : ");
+                ArrayList<String> options = new ArrayList<>();
+                in = new Scanner(System.in);
+                
+                System.out.print("-N (default 2) : ");
+                String value = in.nextLine();
+                if (value.isEmpty()) value = "2";
+                options.add("-N");
+                options.add(value);
+                
+                System.out.print("-L (SINGLE/COMPLETE) : ");
+                value = in.nextLine();
+                options.add("-L");
+                options.add(value);
+                
+                optionsArr = options.toArray(new String[options.size()]);
+                
+                break;            
+            }
+            case 5 : {
                 System.out.println("Commands :");
                 System.out.println("1. Simple KMeans");
                 System.out.println("2. Hierarchical Clusterer");
@@ -182,28 +205,31 @@ public class Main {
                             break;
                         }
                     }
-//                    case 4 : {
-//                        try {
-//                            cls = new myAgnes();
-//                            cls.buildClusterer(dataSet);
-//                            classifierType = "MyAgnes";
-//                            System.out.println("MyAgnes Clusterer successfully built.\n");
-//                        } catch(Exception ex) {
-//                            System.out.println(ex);
-//                        }
-//                        break;
-//                    }                    
+                    case 4 : {
+                        try {
+                            cls = new myAgnes();
+//                            if (optionsArr != null) {
+//                                cls.setOptions(optionsArr);
+//                            }
+                            cls.buildClusterer(dataSet);
+                            classifierType = "MyAgnes";
+                            System.out.println("MyAgnes Clusterer successfully built.\n");
+                        } catch(Exception ex) {
+                            System.out.println(ex);
+                        }
+                        break;
+                    }                    
                     default : {
                         break;
                     }
                 }
                 break;
             }
-            case 5 : {
+            case 6 : {
                 System.out.println(cls.toString());
                 break;
             }
-            case 6 : {
+            case 7 : {
                 System.out.print("Percentage of Training Set : ");
                 float percentTrain = in.nextFloat();
                 if ((percentTrain <= 0.0) || (percentTrain >= 100.0)) {
@@ -225,14 +251,14 @@ public class Main {
                 System.out.println(eval.clusterResultsToString());
                 break;
             }
-            case 7 : {
+            case 8 : {
                 ClusterEvaluation eval = new ClusterEvaluation();
                 eval.setClusterer(cls);
                 eval.evaluateClusterer(dataSet);      
                 System.out.println(eval.clusterResultsToString());
                 break;
             }
-            case 8 : {
+            case 9 : {
                 ArrayList<String> fileNames = getFileNames("input/test");
                 System.out.println("Available Tests : ");
                 for (int i = 0; i < fileNames.size(); i++) {
@@ -255,7 +281,7 @@ public class Main {
                 System.out.println(eval.clusterResultsToString());
                 break;
             }
-            case 9 : {
+            case 10 : {
                 ArrayList<String> fileNames = getFileNames("input/test");
                 System.out.println("Available Tests : ");
                 for (int i = 0; i < fileNames.size(); i++) {
@@ -286,7 +312,7 @@ public class Main {
 		}
                 break;
             }
-            case 10 : {
+            case 11 : {
                 System.out.print("Name of your model : ");
                 Scanner nameScan = new Scanner(System.in);
                 String name = nameScan.nextLine();
@@ -296,7 +322,7 @@ public class Main {
                 System.out.println("File " + name + ".model successfully created.\n");
                 break;
             }
-            case 11 : {
+            case 12 : {
                 ArrayList<String> fileNames = getFileNames("saves/" + classifierType);
                 System.out.println("Saved Models : ");
                 for (int i = 0; i < fileNames.size(); i++) {
