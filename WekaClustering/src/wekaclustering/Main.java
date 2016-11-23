@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import weka.clusterers.AbstractClusterer;
 import weka.core.*;
 import weka.core.converters.*;
 import weka.clusterers.ClusterEvaluation;
@@ -18,7 +19,7 @@ import weka.filters.unsupervised.attribute.Remove;
 
 public class Main {
     private static Instances dataSet;
-    private static Clusterer cls;
+    private static AbstractClusterer cls;
     private static String classifierType;
     private static String[] optionsArr;
     
@@ -120,15 +121,17 @@ public class Main {
                     } catch (Exception ex) {
                         System.out.println(ex);
                     }
+                } else if (classifierType.equals("MyAgnes")) {
+                    try {
+                        cls = new myAgnes();
+                        if (optionsArr != null) {
+                            ((myAgnes)cls).setOptions(optionsArr);
+                        }
+                        cls.buildClusterer(dataSet);
+                    } catch (Exception ex) {
+                        System.out.println(ex);
+                    }
                 }
-//                } else if (classifierType.equals("MyAgnes")) {
-//                    try {
-//                        // cls = new myAgnes();
-//                        cls.buildClusterer(dataSet);
-//                    } catch (Exception ex) {
-//                        System.out.println(ex);
-//                    }
-//                }
                 break;
             }
             case 2 : {
@@ -208,9 +211,9 @@ public class Main {
                     case 4 : {
                         try {
                             cls = new myAgnes();
-//                            if (optionsArr != null) {
-//                                cls.setOptions(optionsArr);
-//                            }
+                            if (optionsArr != null) {
+                                ((myAgnes)cls).setOptions(optionsArr);
+                            }
                             cls.buildClusterer(dataSet);
                             classifierType = "MyAgnes";
                             System.out.println("MyAgnes Clusterer successfully built.\n");
