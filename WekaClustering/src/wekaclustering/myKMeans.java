@@ -75,7 +75,6 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
     * mode is saved
     */
     private double[] m_fullMeansOrModes;
-    private double[] m_fullStdDevs;
     private int[][] m_fullNominalCounts;
     private int[] m_fullMissingCounts;
     
@@ -166,10 +165,10 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             initInstances = instances;
         }
         
+        // Pick Random Centroids
         for (int j = initInstances.numInstances() - 1; j >= 0; j--) {
             instIndex = RandomO.nextInt(j + 1);
-            hk = new DecisionTableHashKey(initInstances.instance(instIndex),
-                initInstances.numAttributes(), true);
+            hk = new DecisionTableHashKey(initInstances.instance(instIndex), initInstances.numAttributes(), true);
             if (!initC.containsKey(hk)) {
                 m_clusterCentroids.add(initInstances.instance(instIndex));
                 initC.put(hk, null);
@@ -197,6 +196,8 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             emptyClusterCount = 0;
             m_iterations++;
             converged = true;
+            
+            // Clusters Instances
             for (i = 0; i < instances.numInstances(); i++) {
                 Instance toCluster = instances.instance(i);
                 int newC = clusterProcessedInstance(toCluster, true);
@@ -274,11 +275,10 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         double minDist = Integer.MAX_VALUE;
         int bestCluster = 0;
         for (int i = 0; i < m_numClusters; i++) {
-            double dist = m_distanceFunction.distance(instance,
-              m_clusterCentroids.instance(i));
+            double dist = m_distanceFunction.distance(instance, m_clusterCentroids.instance(i));
             if (dist < minDist) {
-              minDist = dist;
-              bestCluster = i;
+                minDist = dist;
+                bestCluster = i;
             }
         }
         if (updateErrors) {
@@ -290,15 +290,40 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         }
         return bestCluster;
     }
+    
+    /**
+    * Classifies a given instance.
+    * 
+    * @param instance the instance to be assigned to a cluster
+    * @return the number of the assigned cluster as an interger if the class is
+    *         enumerated, otherwise the predicted value
+    * @throws Exception if instance could not be classified successfully
+    */
+    @Override
+    public int clusterInstance(Instance instance) throws Exception {
+        Instance inst = null;
+        if (!m_dontReplaceMissing) {
+            m_replaceMissingFilter.input(instance);
+            m_replaceMissingFilter.batchFinished();
+            inst = m_replaceMissingFilter.output();
+        } else {
+            inst = instance;
+        }
+
+        return clusterProcessedInstance(inst, false);
+    }
 
     @Override
     public int numberOfClusters() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return m_numClusters;
     }
 
     @Override
     public void setNumClusters(int i) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (i <= 0) {
+            throw new Exception("Number of clusters must be > 0");
+        }
+        m_numClusters = i;
     }
 
     @Override
@@ -319,33 +344,30 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
     *          arrays
     * @return the centroid coordinates
     */
-    protected double[] moveCentroid(int centroidIndex, Instances members,
-        boolean updateClusterInfo) {
+    protected double[] moveCentroid(int centroidIndex, Instances members, boolean updateClusterInfo) {
         double[] vals = new double[members.numAttributes()];
 
         for (int j = 0; j < members.numAttributes(); j++) {
 
-          // in case of Euclidian distance the centroid is the mean point
-          // in case of Manhattan distance the centroid is the median point
-          // in both cases, if the attribute is nominal, the centroid is the mode
-          if (m_distanceFunction instanceof EuclideanDistance || members.attribute(j).isNominal()) {
-            vals[j] = members.meanOrMode(j);
-          }
-
-          if (updateClusterInfo) {
-            m_clusterMissingCounts[centroidIndex][j] = members.attributeStats(j).missingCount;
-            m_clusterNominalCounts[centroidIndex][j] = members.attributeStats(j).nominalCounts;
-            if (members.attribute(j).isNominal()) {
-              if (m_clusterMissingCounts[centroidIndex][j] > m_clusterNominalCounts[centroidIndex][j][Utils.maxIndex(m_clusterNominalCounts[centroidIndex][j])]) {
-                vals[j] = Instance.missingValue(); // mark mode as missing
-              }
-            } else {
-              if (m_clusterMissingCounts[centroidIndex][j] == members
-                .numInstances()) {
-                vals[j] = Instance.missingValue(); // mark mean as missing
-              }
+            // in case of Euclidian distance the centroid is the mean point
+            // in both cases, if the attribute is nominal, the centroid is the mode
+            if (m_distanceFunction instanceof EuclideanDistance || members.attribute(j).isNominal()) {
+                vals[j] = members.meanOrMode(j);
             }
-          }
+
+            if (updateClusterInfo) {
+                m_clusterMissingCounts[centroidIndex][j] = members.attributeStats(j).missingCount;
+                m_clusterNominalCounts[centroidIndex][j] = members.attributeStats(j).nominalCounts;
+                if (members.attribute(j).isNominal()) {
+                    if (m_clusterMissingCounts[centroidIndex][j] > m_clusterNominalCounts[centroidIndex][j][Utils.maxIndex(m_clusterNominalCounts[centroidIndex][j])]) {
+                        vals[j] = Instance.missingValue(); // mark mode as missing
+                    }
+                } else {
+                    if (m_clusterMissingCounts[centroidIndex][j] == members.numInstances()) {
+                       vals[j] = Instance.missingValue(); // mark mean as missing
+                    }
+                }
+            }
         }
         if (updateClusterInfo) {
           m_clusterCentroids.add(new Instance(1.0, vals));
@@ -521,6 +543,67 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
 
         temp.append("\n\n");
         return temp.toString();
+    }
+    
+    /**
+    * set the maximum number of iterations to be executed
+    * 
+    * @param n the maximum number of iterations
+    * @throws Exception if maximum number of iteration is smaller than 1
+    */
+    public void setMaxIterations(int n) throws Exception {
+        if (n <= 0) {
+          throw new Exception("Maximum number of iterations must be > 0");
+        }
+        m_maxIterations = n;
+    }
+    
+    /**
+    * sets the distance function to use for instance comparison.
+    * 
+    * @param df the new distance function to use
+    * @throws Exception if instances cannot be processed
+    */
+    public void setDistanceFunction(DistanceFunction df) throws Exception {
+        if (!(df instanceof EuclideanDistance)) {
+          throw new Exception(
+            "MyKMeans currently only supports the Euclidean distance.");
+        }
+        m_distanceFunction = df;
+    }
+    
+    @Override
+    public void setOptions(String[] options) throws Exception {
+        m_dontReplaceMissing = Utils.getFlag("M", options);
+
+        String optionString = Utils.getOption('N', options);
+
+        if (optionString.length() != 0) {
+            setNumClusters(Integer.parseInt(optionString));
+        }
+
+        optionString = Utils.getOption("I", options);
+        if (optionString.length() != 0) {
+            setMaxIterations(Integer.parseInt(optionString));
+        }
+
+        String distFunctionClass = Utils.getOption('A', options);
+        if (distFunctionClass.length() != 0) {
+            String distFunctionClassSpec[] = Utils.splitOptions(distFunctionClass);
+            if (distFunctionClassSpec.length == 0) {
+                throw new Exception("Invalid DistanceFunction specification string.");
+            }
+            String className = distFunctionClassSpec[0];
+            distFunctionClassSpec[0] = "";
+
+            setDistanceFunction((DistanceFunction) Utils.forName(DistanceFunction.class, className, distFunctionClassSpec));
+        } else {
+            setDistanceFunction(new EuclideanDistance());
+        }
+
+        m_preserveOrder = Utils.getFlag("O", options);
+
+        super.setOptions(options);
     }
     
     public myKMeans() {
