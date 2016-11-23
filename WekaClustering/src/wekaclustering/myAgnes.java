@@ -5,54 +5,112 @@
  */
 package wekaclustering;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import weka.clusterers.AbstractClusterer;
-import weka.core.CapabilitiesHandler;
-import weka.core.Drawable;
+import weka.core.DistanceFunction;
+import weka.core.EuclideanDistance;
+import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.OptionHandler;
 
-/**
- *
- * @author Asus
- */
-public class myAgnes extends AbstractClusterer implements OptionHandler, CapabilitiesHandler, Drawable {
-    @Override
-    public void buildClusterer(Instances i) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
-    @Override
-    public int numberOfClusters() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Enumeration listOptions() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void setOptions(String[] strings) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public String[] getOptions() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int graphType() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public String graph() throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+public class myAgnes extends AbstractClusterer {
+    private ArrayList<ArrayList<Double>> distanceMatrix;
+    private ArrayList<Cluster> clusters;
+    private int numClusters;
+    private int type;
+    
+    protected DistanceFunction distFunc = new EuclideanDistance();
+    private final int SINGLE = 0;
+    private final int COMPLETE = 1;
+    
+    public myAgnes(int _numClusters, int _type) {
+        super();
+        numClusters = _numClusters;
+        type = _type;
+        distanceMatrix = new ArrayList<ArrayList<Double>>();
+        clusters = new ArrayList<Cluster>();
     }
     
-    public myAgnes() {
+    public void mergeCluster(int div1, int div2, int level, double distance) {
+        clusters.get(div1).addMember(new Cluster(clusters.get(div2).getInstance()));
+        clusters.get(div1).setLevel(level);
+        clusters.get(div1).setDistance(distance);
+        clusters.remove(div2);
         
+        for (int i = 0; i < distanceMatrix.size(); i++) {
+            if (type == SINGLE) {
+                if ( distanceMatrix.get(div1).get(i) > distanceMatrix.get(div2).get(i)) {
+                    distanceMatrix.get(div1).set(i, distanceMatrix.get(div2).get(i));
+                }
+            } else if (type == COMPLETE ) {
+                if ( distanceMatrix.get(div1).get(i) < distanceMatrix.get(div2).get(i)) {
+                    distanceMatrix.get(div1).set(i, distanceMatrix.get(div2).get(i));
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void buildClusterer(Instances instances) throws Exception {
+        distFunc.setInstances(instances);
+        if (instances.numInstances() == 0) {
+            return;
+        }
+        for(int i = 0; i < instances.numInstances(); i++) {
+            clusters.add(new Cluster(instances.instance(i)));
+        }
+        for (int i = 0; i < clusters.size(); i++) {
+            ArrayList distanceRow = new ArrayList<Double>();
+            for (int j = 0; j < clusters.size(); j++) {
+                distanceRow.add(distFunc.distance(clusters.get(i).getInstance(), clusters.get(j).getInstance()));
+            }
+            distanceMatrix.add(distanceRow);
+        }
+        
+        int clusterCounter = 0;
+        while (clusterCounter < numClusters) {
+            double val = Double.MAX_VALUE;
+            int div1 = -1;
+            int div2 = -1;
+            for (int i = 0; i < distanceMatrix.size() - 1; i++) {
+                for (int j = i + 1; j < distanceMatrix.size(); j++) {
+                    if (distanceMatrix.get(i).get(j) < val) {
+                        val = distanceMatrix.get(i).get(j);
+                        div1 = i;
+                        div2 = j;
+                    }   
+                }
+            }
+            clusterCounter++;
+            mergeCluster(div1, div2, clusterCounter, val);
+        }
+    }
+
+    @Override
+    public int clusterInstance(Instance instance) throws Exception {
+        double min = Double.MAX_VALUE;
+        int clusterNum = -1;
+        for (int i = 0; i < clusters.size(); i++) {
+            double tempMin = distFunc.distance(clusters.get(i).getInstance(), instance);
+            if (tempMin < min) {
+                min = tempMin;
+                clusterNum = i;
+            }
+            ArrayList<Cluster> cluster = clusters.get(i).getMembers();
+            for (int j = 0; j < cluster.size(); j++) {
+                tempMin = distFunc.distance(clusters.get(j).getInstance(), instance);
+                if (tempMin < min) {
+                    min = tempMin;
+                    clusterNum = i;
+                }
+            }
+        }
+        return clusterNum;
+    }
+    
+    @Override
+    public int numberOfClusters() throws Exception {
+        return numClusters;
     }
 }
