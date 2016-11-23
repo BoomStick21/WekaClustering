@@ -12,6 +12,7 @@ import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.Utils;
 
 
 public class myAgnes extends AbstractClusterer {
@@ -24,12 +25,31 @@ public class myAgnes extends AbstractClusterer {
     private final int SINGLE = 0;
     private final int COMPLETE = 1;
     
-    public myAgnes(int _numClusters, int _type) {
+    public myAgnes() {
         super();
-        numClusters = _numClusters;
-        type = _type;
+        numClusters = 2;
+        type = SINGLE;
         distanceMatrix = new ArrayList<ArrayList<Double>>();
         clusters = new ArrayList<Cluster>();
+    }
+    
+    public void setOptions(String[] options) throws Exception {
+        
+        String optionString = Utils.getOption('N', options); 
+        if (optionString.length() != 0) {
+          Integer temp = new Integer(optionString);
+          numClusters = temp;
+        }
+        else {
+          numClusters = 2;
+        }
+        
+        String linkType = Utils.getOption('L', options);
+        if (linkType.compareTo("SINGLE") == 0) {
+            type = SINGLE;
+        } else if (linkType.compareTo("COMPLETE") == 0) {
+            type = COMPLETE;
+        }
     }
     
     public void mergeCluster(int div1, int div2, int level, double distance) {
