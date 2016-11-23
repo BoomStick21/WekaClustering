@@ -110,7 +110,22 @@ public class Main {
                     } catch (Exception ex) {
                         System.out.println(ex);
                     }
+                } else if (classifierType.equals("MyKMeans")) {
+                    try {
+                        cls = new myKMeans();
+                        cls.buildClusterer(dataSet);
+                    } catch (Exception ex) {
+                        System.out.println(ex);
+                    }
                 }
+//                } else if (classifierType.equals("MyAgnes")) {
+//                    try {
+//                        // cls = new myAgnes();
+//                        cls.buildClusterer(dataSet);
+//                    } catch (Exception ex) {
+//                        System.out.println(ex);
+//                    }
+//                }
                 break;
             }
             case 2 : {
@@ -129,28 +144,55 @@ public class Main {
                 System.out.println("Commands :");
                 System.out.println("1. Simple KMeans");
                 System.out.println("2. Hierarchical Clusterer");
+                System.out.println("3. MyKMeans");
+                System.out.println("4. MyAgnes");
                 System.out.println("0. Return");
                 System.out.print("> ");
                 int choice = in.nextInt();
                 switch(choice) {
                     case 1 : {
-                        cls = new SimpleKMeans();
-                        cls.buildClusterer(dataSet);
-                        classifierType = "KMeans";
-                        System.out.println("SimpleKMeans Clusterer successfully built.\n");
+                        try {
+                            cls = new SimpleKMeans();
+                            cls.buildClusterer(dataSet);
+                            classifierType = "KMeans";
+                            System.out.println("SimpleKMeans Clusterer successfully built.\n");
+                        } catch(Exception ex) {
+                            System.out.println(ex);
+                        }
                         break;
                     }
                     case 2 : {
                         try {
                             cls = new HierarchicalClusterer();
                             cls.buildClusterer(dataSet);
-                            classifierType = "Hieararchical";
+                            classifierType = "Hierarchical";
                             System.out.println("Hierarchical Clusterer successfully built.\n");
                         } catch(Exception ex) {
                             System.out.println(ex);
                         }
                         break;
-                    }                    
+                    }
+                    case 3 : {
+                        try {
+                            cls = new myKMeans();
+                            cls.buildClusterer(dataSet);
+                            classifierType = "MyKMeans";
+                            System.out.println("MyKMeans Clusterer successfully built.\n");
+                        } catch(Exception ex) {
+                            break;
+                        }
+                    }
+//                    case 4 : {
+//                        try {
+//                            cls = new myAgnes();
+//                            cls.buildClusterer(dataSet);
+//                            classifierType = "MyAgnes";
+//                            System.out.println("MyAgnes Clusterer successfully built.\n");
+//                        } catch(Exception ex) {
+//                            System.out.println(ex);
+//                        }
+//                        break;
+//                    }                    
                     default : {
                         break;
                     }
@@ -272,7 +314,13 @@ public class Main {
                             new FileInputStream("saves/KMeans/" + fileNames.get(choice)));
                 else if (classifierType.equals("Hierarchical"))
                     cls = (HierarchicalClusterer) SerializationHelper.read(
-                            new FileInputStream("saves/Hierarchical/" + fileNames.get(choice)));                
+                            new FileInputStream("saves/Hierarchical/" + fileNames.get(choice)));
+                else if (classifierType.equals("MyKMeans"))
+                    cls = (HierarchicalClusterer) SerializationHelper.read(
+                            new FileInputStream("saves/MyKMeans/" + fileNames.get(choice))); 
+                else if (classifierType.equals("MyAgnes"))
+                    cls = (HierarchicalClusterer) SerializationHelper.read(
+                            new FileInputStream("saves/MyAgnes/" + fileNames.get(choice)));                 
                 System.out.println(fileNames.get(choice) + " successfully loaded.\n");
                 break;
             }

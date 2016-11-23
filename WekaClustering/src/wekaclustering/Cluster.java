@@ -17,7 +17,7 @@ public class Cluster {
     
     public Cluster(Instance i) {
         instance = i;
-        level = 0;
+        level = -1;
         distance = Double.MAX_VALUE;
         members = new ArrayList<Cluster>();
     }

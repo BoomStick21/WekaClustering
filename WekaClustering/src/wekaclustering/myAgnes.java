@@ -113,4 +113,11 @@ public class myAgnes extends AbstractClusterer {
     public int numberOfClusters() throws Exception {
         return numClusters;
     }
+    
+    @Override
+    public String toString() {
+        if (clusters.isEmpty())
+            return "";
+        return "numClusters";
+    }
 }
