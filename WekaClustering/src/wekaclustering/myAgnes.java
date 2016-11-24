@@ -138,7 +138,7 @@ public class myAgnes extends AbstractClusterer {
             return "myAgnes: No model built yet.";
         String summary = new String();
         for (int i = 0; i < clusters.size(); i++) {
-            int count = 1 + clusters.get(i).getNumMembers();
+            int count = clusters.get(i).getNumMembers();
             summary += "Cluster " + i + " has " + count + " members :\n";
             for (int j = 0; j < clusters.get(i).getInstances().size(); j++) {
                  summary += clusters.get(i).getInstances().get(j) + "\n";
