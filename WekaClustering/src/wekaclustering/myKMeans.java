@@ -33,7 +33,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
     private int m_maxIterations = 100;
     private int m_iterations = 0;
     private DistanceFunction m_distanceFunction = new EuclideanDistance();
-    private Instances m_clusterCentroids;
+    private Instances clusterCentroids;
     private int[] m_clusterSizes;
     
     /**
@@ -82,7 +82,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
     /**
      * Holds the squared errors for all clusters
      */
-    private double[] m_squaredErrors;
+    private double[] squaredErrors;
     
     /**
     * Returns default capabilities of the clusterer.
@@ -143,7 +143,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             }
         }
         
-        m_clusterCentroids = new Instances(instances, m_numClusters);
+        clusterCentroids = new Instances(instances, m_numClusters);
         int[] clusterAssignments = new int[instances.numInstances()];
         
         if(m_preserveOrder) {
@@ -151,11 +151,6 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         }
         
         m_distanceFunction.setInstances(instances);
-        
-        Random RandomO = new Random(getSeed());
-        int instIndex;
-        HashMap initC = new HashMap();
-        DecisionTableHashKey hk = null;
         
         Instances initInstances = null;
         if(m_preserveOrder) {
@@ -165,22 +160,9 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             initInstances = instances;
         }
         
-        // Pick Random Centroids
-        for (int j = initInstances.numInstances() - 1; j >= 0; j--) {
-            instIndex = RandomO.nextInt(j + 1);
-            hk = new DecisionTableHashKey(initInstances.instance(instIndex), initInstances.numAttributes(), true);
-            if (!initC.containsKey(hk)) {
-                m_clusterCentroids.add(initInstances.instance(instIndex));
-                initC.put(hk, null);
-            }
-            initInstances.swap(j, instIndex);
-
-            if (m_clusterCentroids.numInstances() == m_numClusters) {
-                break;
-            }
-        }
+        initCentroids(initInstances);
         
-        m_numClusters = m_clusterCentroids.numInstances();
+        m_numClusters = clusterCentroids.numInstances();
         
         // removing reference
         initInstances = null;
@@ -188,8 +170,8 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         int i;
         boolean converged = false;
         int emptyClusterCount;
-        Instances[] tempI = new Instances[m_numClusters];
-        m_squaredErrors = new double[m_numClusters];
+        Instances[] tempClusterInstances = new Instances[m_numClusters];
+        squaredErrors = new double[m_numClusters];
         m_clusterNominalCounts = new int[m_numClusters][instances.numAttributes()][0];
         m_clusterMissingCounts = new int[m_numClusters][instances.numAttributes()];
         while (!converged) {
@@ -200,27 +182,27 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             // Clusters Instances
             for (i = 0; i < instances.numInstances(); i++) {
                 Instance toCluster = instances.instance(i);
-                int newC = clusterProcessedInstance(toCluster, true);
-                if (newC != clusterAssignments[i]) {
+                int newCluster = clusterProcessedInstance(toCluster, true);
+                if (newCluster != clusterAssignments[i]) {
                     converged = false;
                 }
-                clusterAssignments[i] = newC;
+                clusterAssignments[i] = newCluster;
             }
 
             // update centroids
-            m_clusterCentroids = new Instances(instances, m_numClusters);
+            clusterCentroids = new Instances(instances, m_numClusters);
             for (i = 0; i < m_numClusters; i++) {
-                tempI[i] = new Instances(instances, 0);
+                tempClusterInstances[i] = new Instances(instances, 0);
             }
             for (i = 0; i < instances.numInstances(); i++) {
-                tempI[clusterAssignments[i]].add(instances.instance(i));
+                tempClusterInstances[clusterAssignments[i]].add(instances.instance(i));
             }
             for (i = 0; i < m_numClusters; i++) {
-                if (tempI[i].numInstances() == 0) {
+                if (tempClusterInstances[i].numInstances() == 0) {
                     // empty cluster
                     emptyClusterCount++;
                 } else {
-                    moveCentroid(i, tempI[i], true);
+                    moveCentroid(i, tempClusterInstances[i], true);
                 }
             }
 
@@ -233,31 +215,31 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
                 if (converged) {
                     Instances[] t = new Instances[m_numClusters];
                     int index = 0;
-                    for (int k = 0; k < tempI.length; k++) {
-                        if (tempI[k].numInstances() > 0) {
-                            t[index] = tempI[k];
+                    for (int k = 0; k < tempClusterInstances.length; k++) {
+                        if (tempClusterInstances[k].numInstances() > 0) {
+                            t[index] = tempClusterInstances[k];
 
-                            for (i = 0; i < tempI[k].numAttributes(); i++) {
+                            for (i = 0; i < tempClusterInstances[k].numAttributes(); i++) {
                                 m_clusterNominalCounts[index][i] = m_clusterNominalCounts[k][i];
                             }
                             index++;
                         }
                     }
-                    tempI = t;
+                    tempClusterInstances = t;
                 } else {
-                    tempI = new Instances[m_numClusters];
+                    tempClusterInstances = new Instances[m_numClusters];
                 }
             }
 
             if (!converged) {
-                m_squaredErrors = new double[m_numClusters];
+                squaredErrors = new double[m_numClusters];
                 m_clusterNominalCounts = new int[m_numClusters][instances.numAttributes()][0];
             }
         }
 
         m_clusterSizes = new int[m_numClusters];
         for (i = 0; i < m_numClusters; i++) {
-            m_clusterSizes[i] = tempI[i].numInstances();
+            m_clusterSizes[i] = tempClusterInstances[i].numInstances();
         }
 
         // Save memory!!
@@ -275,7 +257,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         double minDist = Integer.MAX_VALUE;
         int bestCluster = 0;
         for (int i = 0; i < m_numClusters; i++) {
-            double dist = m_distanceFunction.distance(instance, m_clusterCentroids.instance(i));
+            double dist = m_distanceFunction.distance(instance, clusterCentroids.instance(i));
             if (dist < minDist) {
                 minDist = dist;
                 bestCluster = i;
@@ -286,9 +268,31 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
                 // Euclidean distance to Squared Euclidean distance
                 minDist *= minDist;
             }
-            m_squaredErrors[bestCluster] += minDist;
+            squaredErrors[bestCluster] += minDist;
         }
         return bestCluster;
+    }
+    
+    private void initCentroids(Instances data) throws Exception {
+        Random RandomO = new Random(getSeed());
+        int instIndex;
+        HashMap initCluster = new HashMap();
+        DecisionTableHashKey hk = null;
+
+        // Pick Random Centroids
+        for (int j = data.numInstances() - 1; j >= 0; j--) {
+            instIndex = RandomO.nextInt(j + 1);
+            hk = new DecisionTableHashKey(data.instance(instIndex), data.numAttributes(), true);
+            if (!initCluster.containsKey(hk)) {
+                clusterCentroids.add(data.instance(instIndex));
+                initCluster.put(hk, null);
+            }
+            data.swap(j, instIndex);
+
+            if (clusterCentroids.numInstances() == m_numClusters) {
+                break;
+            }
+        }
     }
     
     /**
@@ -370,7 +374,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             }
         }
         if (updateClusterInfo) {
-          m_clusterCentroids.add(new Instance(1.0, vals));
+          clusterCentroids.add(new Instance(1.0, vals));
         }
         return vals;
     }
@@ -382,7 +386,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
     */
     @Override
     public String toString() {
-        if (m_clusterCentroids == null) {
+        if (clusterCentroids == null) {
             return "No clusterer built yet!";
         }
 
@@ -390,13 +394,13 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         int maxAttWidth = 0;
         boolean containsNumeric = false;
         for (int i = 0; i < m_numClusters; i++) {
-            for (int j = 0; j < m_clusterCentroids.numAttributes(); j++) {
-                if (m_clusterCentroids.attribute(j).name().length() > maxAttWidth) {
-                    maxAttWidth = m_clusterCentroids.attribute(j).name().length();
+            for (int j = 0; j < clusterCentroids.numAttributes(); j++) {
+                if (clusterCentroids.attribute(j).name().length() > maxAttWidth) {
+                    maxAttWidth = clusterCentroids.attribute(j).name().length();
                 }
-                if (m_clusterCentroids.attribute(j).isNumeric()) {
+                if (clusterCentroids.attribute(j).isNumeric()) {
                     containsNumeric = true;
-                    double width = Math.log(Math.abs(m_clusterCentroids.instance(i).value(j))) / Math.log(10.0);
+                    double width = Math.log(Math.abs(clusterCentroids.instance(i).value(j))) / Math.log(10.0);
                     if (width < 0) {
                         width = 1;
                     }
@@ -409,11 +413,11 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             }
         }
 
-        for (int i = 0; i < m_clusterCentroids.numAttributes(); i++) {
-            if (m_clusterCentroids.attribute(i).isNominal()) {
-                Attribute a = m_clusterCentroids.attribute(i);
-                for (int j = 0; j < m_clusterCentroids.numInstances(); j++) {
-                    String val = a.value((int) m_clusterCentroids.instance(j).value(i));
+        for (int i = 0; i < clusterCentroids.numAttributes(); i++) {
+            if (clusterCentroids.attribute(i).isNominal()) {
+                Attribute a = clusterCentroids.attribute(i);
+                for (int j = 0; j < clusterCentroids.numInstances(); j++) {
+                    String val = a.value((int) clusterCentroids.instance(j).value(i));
                     if (val.length() > maxWidth) {
                         maxWidth = val.length();
                     }
@@ -462,7 +466,7 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         temp.append("\nNumber of iterations: " + m_iterations + "\n");
 
         if (m_distanceFunction instanceof EuclideanDistance) {
-            temp.append("Within cluster sum of squared errors: " + Utils.sum(m_squaredErrors));
+            temp.append("Within cluster sum of squared errors: " + Utils.sum(squaredErrors));
         }
 
         if (!m_dontReplaceMissing) {
@@ -493,11 +497,11 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
         }
         temp.append("\n");
 
-        temp.append(pad("", "=", maxAttWidth + (maxWidth * (m_clusterCentroids.numInstances() + 1) + m_clusterCentroids.numInstances() + 1), true));
+        temp.append(pad("", "=", maxAttWidth + (maxWidth * (clusterCentroids.numInstances() + 1) + clusterCentroids.numInstances() + 1), true));
         temp.append("\n");
 
-        for (int i = 0; i < m_clusterCentroids.numAttributes(); i++) {
-            String attName = m_clusterCentroids.attribute(i).name();
+        for (int i = 0; i < clusterCentroids.numAttributes(); i++) {
+            String attName = clusterCentroids.attribute(i).name();
             temp.append(attName);
             for (int j = 0; j < maxAttWidth - attName.length(); j++) {
                 temp.append(" ");
@@ -507,11 +511,11 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             String valMeanMode;
             
             // full data
-            if (m_clusterCentroids.attribute(i).isNominal()) {
+            if (clusterCentroids.attribute(i).isNominal()) {
                 if (m_fullMeansOrModes[i] == -1) { // missing
                     valMeanMode = pad("missing", " ", maxWidth + 1 - "missing".length(), true);
                 } else {
-                    valMeanMode = pad((strVal = m_clusterCentroids.attribute(i).value((int) m_fullMeansOrModes[i])), " ", maxWidth + 1 - strVal.length(), true);
+                    valMeanMode = pad((strVal = clusterCentroids.attribute(i).value((int) m_fullMeansOrModes[i])), " ", maxWidth + 1 - strVal.length(), true);
                 }
             } else {
                 if (Double.isNaN(m_fullMeansOrModes[i])) {
@@ -523,17 +527,17 @@ public class myKMeans extends RandomizableClusterer implements NumberOfClustersR
             temp.append(valMeanMode);
 
             for (int j = 0; j < m_numClusters; j++) {
-                if (m_clusterCentroids.attribute(i).isNominal()) {
-                    if (m_clusterCentroids.instance(j).isMissing(i)) {
+                if (clusterCentroids.attribute(i).isNominal()) {
+                    if (clusterCentroids.instance(j).isMissing(i)) {
                         valMeanMode = pad("missing", " ", maxWidth + 1 - "missing".length(), true);
                     } else {
-                        valMeanMode = pad((strVal = m_clusterCentroids.attribute(i).value((int) m_clusterCentroids.instance(j).value(i))), " ", maxWidth + 1 - strVal.length(), true);
+                        valMeanMode = pad((strVal = clusterCentroids.attribute(i).value((int) clusterCentroids.instance(j).value(i))), " ", maxWidth + 1 - strVal.length(), true);
                     }
                 } else {
-                    if (m_clusterCentroids.instance(j).isMissing(i)) {
+                    if (clusterCentroids.instance(j).isMissing(i)) {
                       valMeanMode = pad("missing", " ", maxWidth + 1 - "missing".length(), true);
                     } else {
-                        valMeanMode = pad((strVal = Utils.doubleToString(m_clusterCentroids.instance(j).value(i), maxWidth, 4).trim()), " ", maxWidth + 1 - strVal.length(), true);
+                        valMeanMode = pad((strVal = Utils.doubleToString(clusterCentroids.instance(j).value(i), maxWidth, 4).trim()), " ", maxWidth + 1 - strVal.length(), true);
                     }
                 }
                 temp.append(valMeanMode);
