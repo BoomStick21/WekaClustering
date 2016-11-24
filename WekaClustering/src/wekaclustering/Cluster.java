@@ -10,14 +10,16 @@ import weka.core.Instance;
 
 
 public class Cluster {
-    ArrayList<Cluster> members;
-    Instance instance;
-    double distance;
-    int level;
+    private ArrayList<Cluster> members;
+    private Instance instance;
+    private int numMembers;
+    private double distance;
+    private int level;
     
     public Cluster(Instance i) {
         instance = i;
         level = -1;
+        numMembers = 1;
         distance = Double.MAX_VALUE;
         members = new ArrayList<Cluster>();
     }
@@ -30,8 +32,13 @@ public class Cluster {
         return members;
     }
     
+    public int getNumMembers() {
+        return numMembers;
+    }
+    
     public void addMember(Cluster c) {
         members.add(c);
+        numMembers += c.numMembers;
     }
     
     public void setLevel(int _level) {

@@ -29,12 +29,11 @@ public class myAgnes extends AbstractClusterer {
         super();
         numClusters = 2;
         type = SINGLE;
-        distanceMatrix = new ArrayList<ArrayList<Double>>();
-        clusters = new ArrayList<Cluster>();
+        distanceMatrix = new ArrayList<>();
+        clusters = new ArrayList<>();
     }
     
-    public void setOptions(String[] options) throws Exception {
-        
+    public void setOptions(String[] options) throws Exception { 
         String optionString = Utils.getOption('N', options); 
         if (optionString.length() != 0) {
           Integer temp = new Integer(optionString);
@@ -53,7 +52,7 @@ public class myAgnes extends AbstractClusterer {
     }
     
     public void mergeCluster(int div1, int div2, int level, double distance) {
-        clusters.get(div1).addMember(new Cluster(clusters.get(div2).getInstance()));
+        clusters.get(div1).addMember(clusters.get(div2));
         clusters.get(div1).setLevel(level);
         clusters.get(div1).setDistance(distance);
         clusters.remove(div2);
@@ -69,11 +68,11 @@ public class myAgnes extends AbstractClusterer {
                 }
             }
         }
-        
-        for (int i = 0; i < clusters.size(); i++) {
+
+        for (int i = 0; i < distanceMatrix.size(); i++) {
             distanceMatrix.get(i).remove(div2);
         }
-        System.out.println(clusters.size()+","+distanceMatrix.get(0).size());
+        distanceMatrix.remove(div2);
     }
     
     @Override
@@ -86,7 +85,7 @@ public class myAgnes extends AbstractClusterer {
             clusters.add(new Cluster(instances.instance(i)));
         }
         for (int i = 0; i < clusters.size(); i++) {
-            ArrayList distanceRow = new ArrayList<Double>();
+            ArrayList distanceRow = new ArrayList<>();
             for (int j = 0; j < clusters.size(); j++) {
                 distanceRow.add(distFunc.distance(clusters.get(i).getInstance(), clusters.get(j).getInstance()));
             }
@@ -94,7 +93,6 @@ public class myAgnes extends AbstractClusterer {
         }
         
         int clusterCounter = 0;
-        System.out.println(clusters.size()+","+distanceMatrix.get(0).size());
         while (clusters.size() > numClusters) {
             double val = Double.MAX_VALUE;
             int div1 = -1;
@@ -105,7 +103,7 @@ public class myAgnes extends AbstractClusterer {
                         val = distanceMatrix.get(i).get(j);
                         div1 = i;
                         div2 = j;
-                    }   
+                    }
                 }
             }
             clusterCounter++;
@@ -146,7 +144,7 @@ public class myAgnes extends AbstractClusterer {
             return "myAgnes: No model built yet.";
         String summary = new String();
         for (int i = 0; i < clusters.size(); i++) {
-            int count = 1 + clusters.get(i).getMembers().size();
+            int count = 1 + clusters.get(i).getNumMembers();
             summary += "Cluster " + i + " has " + count + " members.\n";
         }
         return summary;
