@@ -247,6 +247,8 @@ public class Main {
                 dataSet.randomize(new java.util.Random(1));
                 Instances train = new Instances(dataSet, 0, trainSize);
                 Instances test = new Instances(dataSet, trainSize, testSize);
+                if (classifierType.equals("MyAgnes"))
+                    cls = new myAgnes();
                 cls.buildClusterer(train);
                 ClusterEvaluation eval = new ClusterEvaluation();
                 eval.setClusterer(cls);
@@ -256,6 +258,10 @@ public class Main {
             }
             case 8 : {
                 ClusterEvaluation eval = new ClusterEvaluation();
+                if (classifierType.equals("MyAgnes")) {
+                    cls = new myAgnes();
+                    cls.buildClusterer(dataSet);
+                }
                 eval.setClusterer(cls);
                 eval.evaluateClusterer(dataSet);      
                 System.out.println(eval.clusterResultsToString());
@@ -277,6 +283,8 @@ public class Main {
                 Instances test = ConverterUtils.DataSource.read("input/test/" + fileNames.get(choice));
                 if (test.classIndex() == -1)
                     test.setClassIndex(test.numAttributes() - 1);
+                if (classifierType.equals("MyAgnes"))
+                    cls = new myAgnes();
                 cls.buildClusterer(dataSet);
                 ClusterEvaluation eval = new ClusterEvaluation();
                 eval.setClusterer(cls);

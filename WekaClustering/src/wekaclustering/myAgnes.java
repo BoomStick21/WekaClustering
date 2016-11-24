@@ -116,14 +116,8 @@ public class myAgnes extends AbstractClusterer {
         double min = Double.MAX_VALUE;
         int clusterNum = -1;
         for (int i = 0; i < clusters.size(); i++) {
-            double tempMin = distFunc.distance(clusters.get(i).getInstance(), instance);
-            if (tempMin < min) {
-                min = tempMin;
-                clusterNum = i;
-            }
-            ArrayList<Cluster> cluster = clusters.get(i).getMembers();
-            for (int j = 0; j < cluster.size(); j++) {
-                tempMin = distFunc.distance(clusters.get(j).getInstance(), instance);
+            for (int j = 0; j < clusters.get(i).getInstances().size(); j++) {
+                double tempMin = distFunc.distance(clusters.get(i).getInstances().get(j), instance);
                 if (tempMin < min) {
                     min = tempMin;
                     clusterNum = i;
@@ -145,7 +139,10 @@ public class myAgnes extends AbstractClusterer {
         String summary = new String();
         for (int i = 0; i < clusters.size(); i++) {
             int count = 1 + clusters.get(i).getNumMembers();
-            summary += "Cluster " + i + " has " + count + " members.\n";
+            summary += "Cluster " + i + " has " + count + " members :\n";
+            for (int j = 0; j < clusters.get(i).getInstances().size(); j++) {
+                 summary += clusters.get(i).getInstances().get(j) + "\n";
+            }
         }
         return summary;
     }
