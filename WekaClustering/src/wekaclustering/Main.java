@@ -3,6 +3,7 @@ package wekaclustering;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -162,20 +163,20 @@ public class Main {
                 options.add("-L");
                 options.add(value);
                 
-                System.out.print("-I (Iteration) : ");
-                value = in.nextLine();
-                options.add("-I");
-                options.add(value);
-                
-                System.out.print("-M (Don't Replace missing value: True/False) ");
-                value = in.nextLine();
-                options.add("-M");
-                options.add(value);
-                
-                System.out.print("-O (Preserve order: True/False) : ");
-                value = in.nextLine();
-                options.add("-O");
-                options.add(value);
+//                System.out.print("-I (Iteration) : ");
+//                value = in.nextLine();
+//                options.add("-I");
+//                options.add(value);
+//                
+//                System.out.print("-M (Don't Replace missing value: True/False) ");
+//                value = in.nextLine();
+//                options.add("-M");
+//                options.add(value);
+//                
+//                System.out.print("-O (Preserve order: True/False) : ");
+//                value = in.nextLine();
+//                options.add("-O");
+//                options.add(value);
                 
                 optionsArr = options.toArray(new String[options.size()]);
                 
@@ -266,8 +267,12 @@ public class Main {
                 dataSet.randomize(new java.util.Random(1));
                 Instances train = new Instances(dataSet, 0, trainSize);
                 Instances test = new Instances(dataSet, trainSize, testSize);
-                if (classifierType.equals("MyAgnes"))
+                if (classifierType.equals("MyAgnes")) {
                     cls = new myAgnes();
+                    if (optionsArr != null) {
+                        ((myAgnes)cls).setOptions(optionsArr);
+                    }
+                }
                 cls.buildClusterer(train);
                 ClusterEvaluation eval = new ClusterEvaluation();
                 eval.setClusterer(cls);
@@ -279,6 +284,10 @@ public class Main {
                 ClusterEvaluation eval = new ClusterEvaluation();
                 if (classifierType.equals("MyAgnes")) {
                     cls = new myAgnes();
+                    System.out.println(Arrays.toString(optionsArr));
+                    if (optionsArr != null) {
+                        ((myAgnes)cls).setOptions(optionsArr);
+                    }
                     cls.buildClusterer(dataSet);
                 }
                 eval.setClusterer(cls);
@@ -302,8 +311,12 @@ public class Main {
                 Instances test = ConverterUtils.DataSource.read("input/test/" + fileNames.get(choice));
                 if (test.classIndex() == -1)
                     test.setClassIndex(test.numAttributes() - 1);
-                if (classifierType.equals("MyAgnes"))
+                if (classifierType.equals("MyAgnes")) {
                     cls = new myAgnes();
+                    if (optionsArr != null) {
+                        ((myAgnes)cls).setOptions(optionsArr);
+                    }
+                }
                 cls.buildClusterer(dataSet);
                 ClusterEvaluation eval = new ClusterEvaluation();
                 eval.setClusterer(cls);
